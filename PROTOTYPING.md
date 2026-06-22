@@ -502,6 +502,8 @@ mkdir bulk-actions
 
 **GitHub Actions workflow** — Azure will auto-generate this when you connect your repo in the portal (step 4 below). You do **not** need to create it manually. The only change you need to make after it's generated is adding `skip_app_build: true` (see step 5).
 
+> **⚠️ Do not rename the workflow file.** Azure uses the filename (e.g., `azure-static-web-apps-purple-sea-08b1a8d03.yml`) to identify your Static Web App via OIDC. Renaming it will cause deployments to fail with "Could not determine the Static Web App".
+
 #### 3. Create a PR on GitHub
 
 Push the gallery and routing config to a branch and open a PR:
