@@ -37,7 +37,7 @@ Every exercise maps back to the workshop theory:
 | Input | Why it helps |
 |---|---|
 | Screenshot of the existing app | Claude mirrors colours, spacing, and component patterns |
-| User story / flow description (or a Jira / GitHub issue link) | Grounds the prototype in real behaviour — Claude fetches the ticket through the connector |
+| User story / flow description | Grounds the prototype in real behaviour — describe what the user needs to do and why |
 | List of screens / states needed | Prevents Claude guessing the scope |
 | Design system name (if known) | e.g. "we use shadcn/ui" or "Tailwind + blue/white palette" |
 
@@ -127,9 +127,9 @@ Claude Code reads `CLAUDE.md` automatically on session start — it already know
 
 > **Exercise 1 is the exception:** it uses the **claude.ai quick render** (the artifact renderer in chat) and needs no repo or local setup — just the running app on screen so you can take a screenshot. Everything from Exercise 2 on runs in Claude Code against this codebase.
 
-### Connect integrations
+### Optional: Connect integrations for issue trackers
 
-Exercise 2 fetches a Jira ticket; Optional A opens a GitHub pull request. Connect both before you start Exercise 2.
+The exercises above use written prompts — no integrations needed. If you want Claude to fetch requirements automatically from issue trackers, you can connect these (skip if not applicable):
 
 **Jira — via Rovo connector (claude.ai):**
 
@@ -226,41 +226,28 @@ Keep all screens in one component with useState.
 
 **Your task:**
 
-1. Paste a Jira issue URL and let Claude fetch the story, then build a standalone prototype:
+1. Describe the feature you want and let Claude build a standalone prototype:
 
 ```
-I want a clickable HTML prototype for the page described in this ticket:
-https://anthonynolan.atlassian.net/browse/NOVA-13292
+I want a clickable HTML prototype for a new Attendees page showing all staff
+members who have registered for upcoming events. The flow is:
+- Page lists registered attendees with their name, email, role
+- A filter lets you sort by event or date range
+- Clicking an attendee shows a detail panel with their contact info and
+  events they're attending
 
 First, explore the repo to learn the visual style — colours, card layout,
 sidebar structure, typography, spacing. Then build a single self-contained
 HTML file (inline CSS and vanilla JS, no build step, no external dependencies
 except CDN links if needed) that looks and feels like the real app.
-Use realistic mock data. Save it to prototypes/<feature-name>.html and tell
+Use realistic mock data. Save it to prototypes/attendees.html and tell
 me the path. Do NOT touch any files in frontend/ or backend/.
 ```
 
-Claude pulls the title, description, and acceptance criteria straight from the ticket (via the connected Atlassian integration) and reads the real CSS to extract the colour variables and layout — so the prototype mirrors the actual app, not a generic design.
+Claude reads the real CSS to extract the colour variables and layout — so the prototype mirrors the actual app, not a generic design.
 
 2. Open `prototypes/<feature-name>.html` directly in your browser (double-click the file). Click through the prototype and check it matches the app's look.
 3. If something looks off, describe the difference (*"the sidebar background is lighter than the real app"*) and let Claude fix the HTML file in place.
-
-**Variant — write the brief by hand:** If you don't have a Jira ticket, describe the page directly instead:
-
-```
-I want a clickable HTML prototype for a staff scheduling view. The flow is:
-1. A "Schedule" page shows a weekly calendar grid (Mon–Sun)
-2. Each day lists which staff members are on duty (mock data: 2–3 names per day)
-3. Clicking a staff member opens a side panel with their details and a
-   "Remove from schedule" button
-
-First, explore the repo to learn the visual style — colours, card layout,
-sidebar structure, typography, spacing. Then build a single self-contained
-HTML file (inline CSS and vanilla JS, no build step, no external dependencies
-except CDN links if needed) that looks and feels like the real app.
-Use realistic mock data. Save it to prototypes/schedule.html and tell me
-the path. Do NOT touch any files in frontend/ or backend/.
-```
 
 **What to notice:** Claude reads the real CSS variables and layout patterns before writing a single line of HTML — the prototype should feel native to the app rather than generic. And because it's a plain HTML file in `prototypes/` (gitignored), it never pollutes the codebase or breaks the build.
 
@@ -444,24 +431,202 @@ Optional A ships your implemented code through your normal GitHub review flow; O
 
 **What to notice:** the prototypes repo is separate from the main codebase — it's a living gallery of approved designs that devs reference when implementing features. Each prototype is versioned in git, so you can link it from tickets and see its evolution over time.
 
-### Optional B — Deploy the prototype to an Azure Static Web App
+### Optional B — Deploy all prototypes to Azure Static Web App
 
-**Scenario:** Share a live URL with stakeholders instead of a chat link.
+**Scenario:** Instead of deploying individual prototypes manually, build a unified prototype gallery at a live URL where every prototype is accessible at its own route. When you push a new prototype to GitHub, it deploys automatically.
 
-**Prerequisites:** an Azure account, and the Azure CLI (`az`) or the SWA CLI (`npm i -g @azure/static-web-apps-cli`).
+**Setup — what you'll build:**
+
+Your prototypes repository has a folder per feature with an `index.html` inside:
+```
+prototypes-repo/
+├── index.html                    ← Gallery landing page
+├── staticwebapp.config.json      ← Azure routing config
+├── .github/workflows/
+│   └── deploy.yml               ← GitHub Actions automation
+├── bulk-actions/
+│   └── index.html
+├── schedule/
+│   └── index.html
+└── … (other prototypes)
+```
+
+The gallery landing page (`index.html`) lists all prototypes as clickable cards. Each time you push to GitHub, the workflow automatically deploys to Azure.
 
 **Your task:**
 
-1. Make sure the prototype runs locally as a Vite app: `cd frontend && npm run dev`.
-2. Build the static bundle: `npm run build` → outputs to `frontend/dist`.
-3. Deploy with the SWA CLI:
-   ```bash
-   swa deploy ./frontend/dist --env production
-   ```
-   (or `az staticwebapp create` for a fresh resource — ask Claude Code to generate the exact command for your subscription and resource group).
-4. Open the returned HTTPS URL and click through the prototype as a stakeholder would.
+#### 1. Fork and clone the prototypes repository
 
-**What to notice:** a Static Web App is free-tier friendly and gives a real, shareable URL — far stronger for sign-off than a screen-share. Ask Claude Code to add a GitHub Actions workflow if you want every push to redeploy.
+Visit [github.com/daria-sorokina-da/claudeworkshop-day_4_demo_fe_prototypes](https://github.com/daria-sorokina-da/claudeworkshop-day_4_demo_fe_prototypes) and click **Fork** (top right). Then:
+
+```bash
+git clone https://github.com/YOUR-USERNAME/claudeworkshop-day_4_demo_fe_prototypes.git
+cd claudeworkshop-day_4_demo_fe_prototypes
+```
+
+#### 2. Create repository structure
+
+Ask Claude Code to generate the files or create them manually. You need:
+
+**Gallery landing page** — `index.html` in the repo root. This is an interactive gallery listing all prototypes as cards. Each card links to `./prototype-folder/index.html`. Include fields like title, description, category, status, and flow. See the template in the exercise files.
+
+**Prototype folders** — create a folder for each prototype:
+```bash
+mkdir bulk-actions
+# then save your prototype HTML as bulk-actions/index.html
+```
+
+**Azure routing config** — `staticwebapp.config.json` at repo root:
+```json
+{
+  "routes": [
+    {
+      "route": "/*",
+      "serve": "/index.html",
+      "statusCode": 200
+    },
+    {
+      "route": "/bulk-actions",
+      "serve": "/bulk-actions/index.html"
+    },
+    {
+      "route": "/bulk-actions/*",
+      "serve": "/bulk-actions/index.html"
+    }
+  ],
+  "navigationFallback": {
+    "rewrite": "/index.html"
+  }
+}
+```
+
+**GitHub Actions workflow** — `.github/workflows/deploy.yml`:
+```yaml
+name: Deploy to Azure Static Web App
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+    branches:
+      - main
+
+jobs:
+  build_and_deploy_job:
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
+    runs-on: ubuntu-latest
+    name: Build and Deploy
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - name: Deploy to Azure Static Web App
+        id: builddeploy
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: "upload"
+          app_location: "/"
+          api_location: ""
+          output_location: ""
+          skip_app_build: true
+
+  close_pull_request_job:
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    name: Close Pull Request Job
+    steps:
+      - name: Close Pull Request in Azure Static Web App
+        id: closepullrequest
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          action: "close"
+```
+
+#### 3. Push to GitHub
+
+```bash
+git add .
+git commit -m "Add gallery, routing config, and deployment workflow"
+git push origin main
+```
+
+#### 4. Set up Azure Static Web App — Portal Steps
+
+1. Open [portal.azure.com](https://portal.azure.com) and sign in with your Azure account (free tier is fine).
+
+2. Click **Create a resource** → search **Static Web App** → click **Create**.
+
+3. **Fill in the form:**
+   - **Subscription**: Select your subscription
+   - **Resource Group**: Create new (e.g., `prototypes-rg`) or use existing
+   - **Name**: e.g., `enchanted-stables-prototypes` (becomes part of your public URL)
+   - **Plan type**: **Free**
+   - **Region**: Choose closest to you (e.g., `East US`)
+   - **Source**: **GitHub**
+
+4. **Authorize GitHub:**
+   - Click **Sign in with GitHub** and complete the OAuth flow.
+   - Grant permissions when prompted.
+
+5. **Select your repository:**
+   - **Organization**: Your GitHub username
+   - **Repository**: `claudeworkshop-day_4_demo_fe_prototypes`
+   - **Branch**: `main`
+
+6. **Build details:**
+   - **Build Presets**: Leave blank (we're deploying static HTML only, no build needed)
+   - **App location**: `/`
+   - **API location**: Leave blank
+   - **Output location**: Leave blank
+
+7. Click **Review + create** → **Create**.
+
+Azure will:
+- Provision the Static Web App (~2 minutes)
+- Automatically create a GitHub secret `AZURE_STATIC_WEB_APPS_API_TOKEN` in your repo
+- Trigger the first deployment
+
+#### 5. Verify the GitHub secret was created
+
+1. Go to your GitHub repo → **Settings** → **Secrets and variables** → **Actions**.
+2. You should see `AZURE_STATIC_WEB_APPS_API_TOKEN` listed.
+3. If it's missing, Azure will have shown an error — check the Azure Portal for deployment logs.
+
+#### 6. Access your gallery
+
+Once deployed (watch the Actions tab in GitHub for the workflow to complete):
+
+- **Gallery home**: `https://<your-swa-name>.azurestaticapps.net/`
+- **Bulk-actions**: `https://<your-swa-name>.azurestaticapps.net/bulk-actions`
+- **Any prototype**: `https://<your-swa-name>.azurestaticapps.net/<folder-name>`
+
+**Example:** if your resource name is `enchanted-stables-prototypes`, visit:
+- `https://enchanted-stables-prototypes.azurestaticapps.net/`
+
+#### 7. Add more prototypes
+
+Every time you create a new prototype folder and push to GitHub:
+
+1. Create a new folder: `mkdir my-new-feature`
+2. Save your prototype: `my-new-feature/index.html`
+3. Update `staticwebapp.config.json` with a route for the new prototype (copy the bulk-actions pattern)
+4. Update the gallery (`index.html`) to include a card for the new prototype
+5. Commit and push:
+   ```bash
+   git add .
+   git commit -m "Add my-new-feature prototype"
+   git push
+   ```
+
+GitHub Actions runs automatically. Your prototype is live in ~30 seconds.
+
+**What to notice:** this is a permanent gallery, not a one-off deploy. Every time you push a new prototype to GitHub, it's live in seconds. Stakeholders bookmark the gallery URL and always see the latest versions. No manual copy/paste, no SWA CLI, no credentials to manage — just git push. Pull request previews are included automatically (Azure creates a staging environment for each PR).
 
 ---
 
