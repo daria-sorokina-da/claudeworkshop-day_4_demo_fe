@@ -622,8 +622,14 @@ Azure will:
 #### 5. Verify the GitHub secret was created
 
 1. Go to your GitHub repo → **Settings** → **Secrets and variables** → **Actions**.
-2. You should see `AZURE_STATIC_WEB_APPS_API_TOKEN` listed.
-3. If it's missing, Azure will have shown an error — check the Azure Portal for deployment logs.
+2. Look for a secret starting with `AZURE_STATIC_WEB_APPS_API_TOKEN`. Azure may create it with a resource-specific suffix (e.g., `AZURE_STATIC_WEB_APPS_API_TOKEN_PURPLE_SEA_08B1A8D03`).
+3. **If the secret name has a suffix**, update your `deploy.yml` workflow to use the exact name:
+   - Open `.github/workflows/deploy.yml`
+   - Find `azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}`
+   - Replace with the correct secret name: `${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_PURPLE_SEA_08B1A8D03 }}`
+   - Do this in both the build and close jobs
+   - Commit and push
+4. If the secret is missing entirely, check the Azure Portal for deployment logs or re-run the Static Web App creation.
 
 #### 6. Access your gallery
 
