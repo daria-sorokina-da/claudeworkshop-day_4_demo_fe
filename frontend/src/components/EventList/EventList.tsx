@@ -15,10 +15,9 @@ export function EventList() {
     <div>
       <h2 style={{ marginBottom: '1rem' }}>Upcoming Events ({events.length})</h2>
       <ul style={{ listStyle: 'none', padding: 0 }}>
-        {events.map((event: Event, index: number) => (
-          // ISSUE: key should be event.id, not index
+        {events.map((event: Event) => (
           <li
-            key={index}
+            key={event.id}
             style={{
               border: '1px solid #ddd',
               borderRadius: '8px',
