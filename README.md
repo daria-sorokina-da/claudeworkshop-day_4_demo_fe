@@ -20,6 +20,10 @@ npm run dev      # http://localhost:5173
 
 The full lab is in **[EXERCISE.md](EXERCISE.md)** — start there.
 
+## Prototyping with Claude
+
+**[PROTOTYPING.md](PROTOTYPING.md)** is a companion module on turning ideas into working prototypes with Claude — from a quick clickable render in claude.ai to real, runnable code in this repo. It walks through prototyping from a screenshot, building new pages and features as code, generating SVG wireframes, driving code toward a target mockup, troubleshooting, and shipping via PR or a live deploy.
+
 ## Layout
 
 - `frontend/` — the React + TypeScript app (components / hooks / services)
