@@ -435,23 +435,22 @@ Optional A ships your implemented code through your normal GitHub review flow; O
 
 **Scenario:** Instead of deploying individual prototypes manually, build a unified prototype gallery at a live URL where every prototype is accessible at its own route. When you push a new prototype to GitHub, it deploys automatically.
 
-**Setup — what you'll build:**
+**Setup — what's already in the repo:**
 
-Your prototypes repository has a folder per feature with an `index.html` inside:
+The template repository ships with the gallery scaffolding **already built** — you don't recreate it. It starts with no prototypes; you add a folder per feature:
 ```
 prototypes-repo/
-├── index.html                    ← Gallery landing page
-├── staticwebapp.config.json      ← Azure routing config
+├── index.html                  ← Gallery landing page (showcase — already built, starts empty)
+├── staticwebapp.config.json    ← Azure routing config (starts with no prototype routes)
 ├── .github/workflows/
-│   └── deploy.yml               ← GitHub Actions automation
-├── bulk-actions/
-│   └── index.html
-├── schedule/
-│   └── index.html
-└── … (other prototypes)
+│   └── azure-static-web-apps-*.yml   ← deploy workflow (Azure generates/owns this)
+├── README.md
+└── (you add)
+    └── bulk-actions/
+        └── index.html          ← one folder per prototype
 ```
 
-The gallery landing page (`index.html`) lists all prototypes as clickable cards. Each time you push to GitHub, the workflow automatically deploys to Azure.
+The gallery landing page (`index.html`) lists all registered prototypes as clickable cards and shows a friendly empty state until you add the first one. Its styling is deliberately **distinct from the app** (a gradient-hero showcase, not the app's sidebar dashboard) so nobody confuses the gallery with the production portal. Each time you push to GitHub, the workflow automatically deploys to Azure.
 
 **Your task:**
 
@@ -464,35 +463,37 @@ git clone https://github.com/YOUR-USERNAME/claudeworkshop-day_4_demo_fe_prototyp
 cd claudeworkshop-day_4_demo_fe_prototypes
 ```
 
-#### 2. Create repository structure
+#### 2. Add a prototype and register it
 
-Ask Claude Code to generate the files or create them manually. You need:
+The gallery (`index.html`), routing config (`staticwebapp.config.json`), and README already exist in your fork — **don't recreate them**. Adding a prototype is three small steps. Ask Claude Code to do all three, or do them by hand:
 
-**Gallery landing page** — `index.html` in the repo root. This is an interactive gallery listing all prototypes as cards. Each card links to `./prototype-folder/index.html`. Include fields like title, description, category, status, and flow. See the template in the exercise files.
-
-**Prototype folders** — create a folder for each prototype:
+**a. Create the folder** — one folder per prototype, with the HTML saved as `index.html` inside:
 ```bash
 mkdir bulk-actions
 # then save your prototype HTML as bulk-actions/index.html
 ```
 
-**Azure routing config** — `staticwebapp.config.json` at repo root:
+**b. Register it in the gallery** — add an entry to the `prototypes` array near the bottom of `index.html`. Once it's in the list, the card renders automatically and the empty state disappears:
+```js
+const prototypes = [
+  {
+    id: 'bulk-actions',
+    title: 'Bulk Actions — Events',
+    category: 'events',        // events | schedule | staff
+    description: 'Select multiple events and deactivate them in one action.',
+    status: 'approved',        // approved | draft | wip
+    flow: 'Select mode → checkboxes → action bar → confirm → toast',
+    href: './bulk-actions/index.html'
+  }
+];
+```
+
+**c. Add a route** — add the prototype's routes to `staticwebapp.config.json`. The file starts with an empty `routes` array and a `navigationFallback`; append a pair of entries per prototype:
 ```json
 {
   "routes": [
-    {
-      "route": "/*",
-      "serve": "/index.html",
-      "statusCode": 200
-    },
-    {
-      "route": "/bulk-actions",
-      "serve": "/bulk-actions/index.html"
-    },
-    {
-      "route": "/bulk-actions/*",
-      "serve": "/bulk-actions/index.html"
-    }
+    { "route": "/bulk-actions",   "serve": "/bulk-actions/index.html" },
+    { "route": "/bulk-actions/*", "serve": "/bulk-actions/index.html" }
   ],
   "navigationFallback": {
     "rewrite": "/index.html"
@@ -500,25 +501,25 @@ mkdir bulk-actions
 }
 ```
 
-**GitHub Actions workflow** — Azure will auto-generate this when you connect your repo in the portal (step 4 below). You do **not** need to create it manually. The only change you need to make after it's generated is adding `skip_app_build: true` (see step 5).
+**GitHub Actions workflow** — Azure auto-generates this when you connect your repo in the portal (step 4 below); you do **not** create it manually. The template may already include a sample `azure-static-web-apps-*.yml` from the original setup — when you connect your **own** Static Web App, Azure commits a new workflow named after *your* resource (with its own secret). Apply the step-5 fixes to whichever workflow Azure generates for you, and delete any leftover sample workflow that references a resource/secret you don't own (it will fail otherwise).
 
 > **⚠️ Do not rename the workflow file.** Azure uses the filename (e.g., `azure-static-web-apps-purple-sea-08b1a8d03.yml`) to identify your Static Web App via OIDC. Renaming it will cause deployments to fail with "Could not determine the Static Web App".
 
 #### 3. Create a PR on GitHub
 
-Push the gallery and routing config to a branch and open a PR:
+Push your new prototype (folder + the gallery/route registrations) to a branch and open a PR:
 
 ```cmd
-git checkout -b setup/azure-deployment
-git add index.html staticwebapp.config.json bulk-actions/
-git commit -m "Add gallery, routing config, and prototype folders"
-git push origin setup/azure-deployment
+git checkout -b add/bulk-actions
+git add bulk-actions/ index.html staticwebapp.config.json
+git commit -m "Add bulk-actions prototype"
+git push origin add/bulk-actions
 ```
 
 Then on GitHub:
 1. Open your fork and click **Pull requests** → **New pull request**
-2. Set base to `main`, compare to `setup/azure-deployment`
-3. Create the PR with title *"Setup: Add Azure deployment workflow"*
+2. Set base to `main`, compare to `add/bulk-actions`
+3. Create the PR with a descriptive title *"Add bulk-actions prototype"*
 4. Review the changes, then click **Merge pull request** to merge to main
 
 #### 4. Set up Azure Static Web App — Portal Steps
@@ -559,14 +560,14 @@ Azure will:
 
 #### 5. Fix the auto-generated workflow
 
-When Azure creates the Static Web App, it commits a workflow file (e.g., `.github/workflows/azure-static-web-apps-*.yml`) and a secret directly into your repo. The workflow works but will fail on a static HTML repo because it tries to run a build. You need to add one line to skip it.
+When Azure creates the Static Web App, it commits a workflow file (e.g., `.github/workflows/azure-static-web-apps-*.yml`) and a secret directly into your repo. The workflow works but needs **two** small fixes on a static HTML repo: it tries to run a build (which fails because there's no build script), and its PR-close job is missing the deployment token.
 
 1. Pull the new workflow file Azure committed:
    ```bash
    git pull origin main
    ```
 
-2. Open the auto-generated workflow file in `.github/workflows/` and add `skip_app_build: true` to the deploy step:
+2. **Skip the build.** In the auto-generated workflow file, add `skip_app_build: true` to the **Build And Deploy** step:
    ```yaml
    - name: Build And Deploy
      uses: Azure/static-web-apps-deploy@v1
@@ -575,15 +576,34 @@ When Azure creates the Static Web App, it commits a workflow file (e.g., `.githu
        ...
        skip_app_build: true    # ← add this line
    ```
+   Without it, the deploy fails during the build with: *"Could not find either 'build' or 'build:azure' node under 'scripts' in package.json"* — Azure's Oryx builder assumes a Node app and tries to `npm run build`, but a static HTML repo has no build script.
 
-3. Commit and push:
+3. **Give the PR-close job the token.** The auto-generated `close_pull_request_job` calls the deploy action with `action: "close"` but **omits** `azure_static_web_apps_api_token`. Current versions of the action require the token even to close a PR's staging environment, so every PR merge fails with:
+
+   > `deployment_token was not provided.`
+
+   This is separate from the build error above — it only fires on the `pull_request: closed` event (i.e. when you merge a PR), and it does **not** block your real deploy on `main`. Add the same token to that step:
+   ```yaml
+   close_pull_request_job:
+     ...
+     steps:
+       - name: Close Pull Request
+         uses: Azure/static-web-apps-deploy@v1
+         with:
+           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_... }}  # ← add this line
+           action: "close"
+   ```
+
+4. Commit and push:
    ```bash
    git add .github/workflows/
-   git commit -m "fix: skip build step for static HTML repo"
+   git commit -m "fix: skip build for static HTML and pass token to PR close job"
    git push origin main
    ```
 
 GitHub Actions will re-run and deploy successfully.
+
+> **Two failures, don't conflate them.** The build error appears on **push to main** (Build and Deploy job); the `deployment_token was not provided` error appears on **PR merge** (Close Pull Request job). Check which job failed before assuming the secret is missing — the secret can be present and correct while the close job still errors, simply because that job never references it.
 
 #### 6. Access your gallery
 
