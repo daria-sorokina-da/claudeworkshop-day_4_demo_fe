@@ -581,6 +581,8 @@ Claude will handle the git workflow and GitHub PR via the `gh` CLI.
 
 Once merged to main, GitHub Actions triggers automatically and deploys to Azure.
 
+> **⚠️ Important:** If Azure auto-generates a second workflow file (e.g., `azure-static-web-apps-*.yml`), **delete it and push the deletion**. The custom `deploy.yml` you created includes `skip_app_build: true`, which prevents Azure from trying to build—since your prototypes are static HTML only. Auto-generated workflows cause build failures looking for `package.json` or build scripts that don't exist in a static repo. To fix: remove the auto-generated file, commit, and push.
+
 #### 4. Set up Azure Static Web App — Portal Steps
 
 1. Open [portal.azure.com](https://portal.azure.com) and sign in with your Azure account (free tier is fine).
