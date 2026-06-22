@@ -500,62 +500,16 @@ mkdir bulk-actions
 }
 ```
 
-**GitHub Actions workflow** — `.github/workflows/deploy.yml`:
-```yaml
-name: Deploy to Azure Static Web App
-
-on:
-  push:
-    branches:
-      - main
-  pull_request:
-    types: [opened, synchronize, reopened, closed]
-    branches:
-      - main
-
-jobs:
-  build_and_deploy_job:
-    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
-    runs-on: ubuntu-latest
-    name: Build and Deploy
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          submodules: true
-
-      - name: Deploy to Azure Static Web App
-        id: builddeploy
-        uses: Azure/static-web-apps-deploy@v1
-        with:
-          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          action: "upload"
-          app_location: "/"
-          api_location: ""
-          output_location: ""
-          skip_app_build: true
-
-  close_pull_request_job:
-    if: github.event_name == 'pull_request' && github.event.action == 'closed'
-    runs-on: ubuntu-latest
-    name: Close Pull Request Job
-    steps:
-      - name: Close Pull Request in Azure Static Web App
-        id: closepullrequest
-        uses: Azure/static-web-apps-deploy@v1
-        with:
-          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
-          action: "close"
-```
+**GitHub Actions workflow** — Azure will auto-generate this when you connect your repo in the portal (step 4 below). You do **not** need to create it manually. The only change you need to make after it's generated is adding `skip_app_build: true` (see step 5).
 
 #### 3. Create a PR on GitHub
 
-**Option A — Manual (GitHub web):**
+Push the gallery and routing config to a branch and open a PR:
 
 ```cmd
 git checkout -b setup/azure-deployment
-git add .
-git commit -m "Add gallery, routing config, and deployment workflow"
+git add index.html staticwebapp.config.json bulk-actions/
+git commit -m "Add gallery, routing config, and prototype folders"
 git push origin setup/azure-deployment
 ```
 
@@ -564,24 +518,6 @@ Then on GitHub:
 2. Set base to `main`, compare to `setup/azure-deployment`
 3. Create the PR with title *"Setup: Add Azure deployment workflow"*
 4. Review the changes, then click **Merge pull request** to merge to main
-
-**Option B — Let Claude Code do it:**
-
-Open Claude Code from the prototypes repo and send this prompt:
-
-```
-Create a feature branch, commit the gallery, routing config, and deployment
-workflow files, push the branch, and open a pull request on GitHub.
-
-Title the PR "Setup: Add Azure deployment workflow" and summarise what
-changed (routing config, GitHub Actions workflow). Then merge the PR to main.
-```
-
-Claude will handle the git workflow and GitHub PR via the `gh` CLI.
-
-Once merged to main, GitHub Actions triggers automatically and deploys to Azure.
-
-> **⚠️ Important:** If Azure auto-generates a second workflow file (e.g., `azure-static-web-apps-*.yml`), **delete it and push the deletion**. The custom `deploy.yml` you created includes `skip_app_build: true`, which prevents Azure from trying to build—since your prototypes are static HTML only. Auto-generated workflows cause build failures looking for `package.json` or build scripts that don't exist in a static repo. To fix: remove the auto-generated file, commit, and push.
 
 #### 4. Set up Azure Static Web App — Portal Steps
 
@@ -619,17 +555,33 @@ Azure will:
 - Automatically create a GitHub secret `AZURE_STATIC_WEB_APPS_API_TOKEN` in your repo
 - Trigger the first deployment
 
-#### 5. Verify the GitHub secret was created
+#### 5. Fix the auto-generated workflow
 
-1. Go to your GitHub repo → **Settings** → **Secrets and variables** → **Actions**.
-2. Look for a secret starting with `AZURE_STATIC_WEB_APPS_API_TOKEN`. Azure may create it with a resource-specific suffix (e.g., `AZURE_STATIC_WEB_APPS_API_TOKEN_PURPLE_SEA_08B1A8D03`).
-3. **If the secret name has a suffix**, update your `deploy.yml` workflow to use the exact name:
-   - Open `.github/workflows/deploy.yml`
-   - Find `azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}`
-   - Replace with the correct secret name: `${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_PURPLE_SEA_08B1A8D03 }}`
-   - Do this in both the build and close jobs
-   - Commit and push
-4. If the secret is missing entirely, check the Azure Portal for deployment logs or re-run the Static Web App creation.
+When Azure creates the Static Web App, it commits a workflow file (e.g., `.github/workflows/azure-static-web-apps-*.yml`) and a secret directly into your repo. The workflow works but will fail on a static HTML repo because it tries to run a build. You need to add one line to skip it.
+
+1. Pull the new workflow file Azure committed:
+   ```bash
+   git pull origin main
+   ```
+
+2. Open the auto-generated workflow file in `.github/workflows/` and add `skip_app_build: true` to the deploy step:
+   ```yaml
+   - name: Build And Deploy
+     uses: Azure/static-web-apps-deploy@v1
+     with:
+       azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_... }}
+       ...
+       skip_app_build: true    # ← add this line
+   ```
+
+3. Commit and push:
+   ```bash
+   git add .github/workflows/
+   git commit -m "fix: skip build step for static HTML repo"
+   git push origin main
+   ```
+
+GitHub Actions will re-run and deploy successfully.
 
 #### 6. Access your gallery
 
