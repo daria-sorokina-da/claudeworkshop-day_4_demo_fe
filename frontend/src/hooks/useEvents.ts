@@ -18,9 +18,7 @@ export function useEvents(category?: string): UseEventsResult {
     setError(null)
     fetchEvents(category)
       .then((data) => {
-        // BUG: sorts by spotsRegistered descending — events appear by popularity,
-        // not chronologically. Should sort by date ascending.
-        const sorted = [...data].sort((a, b) => b.spotsRegistered - a.spotsRegistered)
+        const sorted = [...data].sort((a, b) => a.date.localeCompare(b.date))
         setEvents(sorted)
       })
       .catch((err: unknown) => {

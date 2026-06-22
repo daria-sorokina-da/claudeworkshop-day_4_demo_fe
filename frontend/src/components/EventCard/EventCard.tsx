@@ -26,7 +26,7 @@ export function EventCard({ event }: EventCardProps) {
       <h3 className="event-title">{event.title}</h3>
       <p className="event-meta">{event.location}</p>
       <div className="event-footer">
-        <span className={spotsLeft > 0 ? 'spots-available' : 'spots-full'}>
+        <span className={spotsLeft === 0 ? 'spots-full' : spotsLeft < 10 ? 'spots-low' : 'spots-available'}>
           {spotsLeft > 0 ? `${spotsLeft} spots left` : 'FULL'}
         </span>
       </div>
