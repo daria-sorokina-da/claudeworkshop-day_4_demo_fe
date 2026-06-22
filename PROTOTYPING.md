@@ -548,13 +548,38 @@ jobs:
           action: "close"
 ```
 
-#### 3. Push to GitHub
+#### 3. Create a PR on GitHub
 
-```bash
+**Option A — Manual (GitHub web):**
+
+```cmd
+git checkout -b setup/azure-deployment
 git add .
 git commit -m "Add gallery, routing config, and deployment workflow"
-git push origin main
+git push origin setup/azure-deployment
 ```
+
+Then on GitHub:
+1. Open your fork and click **Pull requests** → **New pull request**
+2. Set base to `main`, compare to `setup/azure-deployment`
+3. Create the PR with title *"Setup: Add Azure deployment workflow"*
+4. Review the changes, then click **Merge pull request** to merge to main
+
+**Option B — Let Claude Code do it:**
+
+Open Claude Code from the prototypes repo and send this prompt:
+
+```
+Create a feature branch, commit the gallery, routing config, and deployment
+workflow files, push the branch, and open a pull request on GitHub.
+
+Title the PR "Setup: Add Azure deployment workflow" and summarise what
+changed (routing config, GitHub Actions workflow). Then merge the PR to main.
+```
+
+Claude will handle the git workflow and GitHub PR via the `gh` CLI.
+
+Once merged to main, GitHub Actions triggers automatically and deploys to Azure.
 
 #### 4. Set up Azure Static Web App — Portal Steps
 
@@ -643,12 +668,12 @@ GitHub Actions runs automatically. Your prototype is live in ~30 seconds.
 
 | Exercise | Skill |
 |---|---|
-| From screenshot (claude.ai) | Mirror an existing design system from a visual — no code access needed |
-| New page as code | Build a whole new page in the real app — Claude finds the existing patterns itself |
-| Add a feature as code | Extend an existing page in real code, grounded in the actual types |
-| Mockup as SVG | Generate a low-fidelity wireframe from requirements as a versioned SVG file |
-| Toward a mockup | Drive the real code to a designed target, letting Claude locate the structure |
-| Troubleshooting | Recover a running prototype from blank screens, build failures, and type errors |
-| Handoff (optional) | Bring a claude.ai artifact into the real codebase |
-| GitHub (optional) | Pull an issue and ship the prototype as a PR via the connector |
-| Deploy (optional) | Ship a prototype as a shareable Azure Static Web App |
+| 1 — Prototype from a screenshot | Prototyping from a visual · mirroring design systems · claude.ai quick render |
+| 1b — Prototype from exported HTML | Using real markup as input for Claude · exact style value extraction · faster visual match |
+| 2 — New page as real code | Repo exploration · learning visual style and data structure · building standalone HTML prototypes |
+| 3 — Wireframe mockup as SVG | Low-fidelity overlay sketching · claude.ai for stakeholder sign-off · iterating by conversation |
+| 4 — Add a feature as a prototype | Extending an existing page · multi-state flows · interactive HTML prototypes |
+| 5 — Drive code toward a mockup | Prototype → real code handoff · Playwright testing · screenshot validation · implementation verification |
+| 6 — Troubleshoot the prototype | Fast recovery · diagnosing blank screens, build failures, and type errors |
+| Optional A — Store prototypes in GitHub | BA workflow · version control · feature-per-folder structure · sharing with dev teams |
+| Optional B — Deploy with Azure SWA | CI/CD automation · GitHub Actions workflows · routing config for multi-prototype gallery · live deployment on push |
