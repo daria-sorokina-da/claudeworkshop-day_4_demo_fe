@@ -1,3 +1,5 @@
 prototypes/
 screenshots/
 node_modules/
+temp/
+e2e/

@@ -1,3 +1,5 @@
+import { StaffList } from '../components/StaffList/StaffList'
+
 export function VolunteersPage() {
   return (
     <div>
@@ -6,10 +8,7 @@ export function VolunteersPage() {
         <p className="page-subtitle">Manage stable staff members</p>
       </div>
 
-      <div className="placeholder-card">
-        <h2>Staff management coming soon</h2>
-        <p>Build this section in the workshop — see Part 3 of the demo guide.</p>
-      </div>
+      <StaffList />
     </div>
   )
 }
